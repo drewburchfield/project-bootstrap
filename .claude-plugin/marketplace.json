@@ -1,0 +1,12 @@
+{
+  "name": "project-bootstrap-dev",
+  "owner": {"name": "Drew Burchfield", "url": "https://github.com/drewburchfield"},
+  "plugins": [{
+    "name": "project-bootstrap",
+    "source": "./",
+    "description": "Auto-detect project language, set up quality tooling and stop hooks, run compound PR review cycles with agent reviews and Devin.ai integration",
+    "version": "1.2.0",
+    "author": {"name": "Drew Burchfield", "url": "https://github.com/drewburchfield"},
+    "category": "development"
+  }]
+}
