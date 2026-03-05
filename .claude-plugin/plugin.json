@@ -12,13 +12,11 @@
   "keywords": [
     "bootstrap",
     "quality",
-    "lint",
-    "typecheck",
+    "linting",
     "eslint",
     "prettier",
     "ruff",
-    "code-review",
-    "quality-gate",
+    "pyright",
     "pr-review",
     "devin"
   ]
