@@ -14,6 +14,8 @@ Auto-detects your project language, installs and configures linting, formatting,
 
 For PR work: `/quality-gate` runs a thorough local review pass with agent reviews, Devin.ai integration, and remediation cycles, with optional merge after explicit approval. `/ship-loop` is the "yes, ship this" driver that wraps quality-gate's review with CI watching, `--greenlit`-gated merge, deploy verification, and issue closeout.
 
+For repo hygiene: `/docs-drift` scans recent merged PRs and commits for stale setup docs, runbooks, CLAUDE.md, AGENTS.md, and project guidance.
+
 For team work: `/supervision-loop` consolidates a teammate's Slack, GitHub, and Linear activity into a current feedback and delegation brief. It drafts replies in your voice and never auto-sends. If a repo has a private `.claude/supervision-loop/default.md`, `/supervision-loop` uses it automatically.
 
 ## Commands
@@ -23,6 +25,7 @@ For team work: `/supervision-loop` consolidates a teammate's Slack, GitHub, and 
 | `/bootstrap` | Auto-detect project language, install quality tooling, set up stop hooks, and pick complementary plugins |
 | `/quality-gate` | Thorough PR review cycle with agent reviews, Devin.ai integration, and remediation, with optional merge after approval |
 | `/ship-loop` | Shipping driver: wraps quality-gate with CI watching, remediation, `--greenlit`-gated merge, deploy verification, and closeout |
+| `/docs-drift` | Weekly-friendly docs drift scan across recent PRs, commits, setup docs, runbooks, and project guidance |
 | `/supervision-loop` | Developer supervision loop: open and merged PR review, draft feedback in your voice, suggest next assignments |
 
 ## Features
@@ -32,6 +35,7 @@ For team work: `/supervision-loop` consolidates a teammate's Slack, GitHub, and 
 - Issue tracker integration (Linear, Jira, GitHub Issues, or standalone)
 - Stop hook enforces quality gates on every Claude session
 - Shipping loop for PR babysitting and greenlit merge workflows
+- Docs drift scans for weekly cloud routines and local repo hygiene
 - Developer supervision profiles for recurring review and delegation workflows
 
 ## Languages
