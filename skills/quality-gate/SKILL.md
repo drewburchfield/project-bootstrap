@@ -1,6 +1,6 @@
 ---
 name: quality-gate
-description: This skill should be used when the user asks to "quality gate", "run quality gate", "review and merge", "PR review cycle", or mentions completing a phase/milestone and wanting comprehensive review before merge. Implements compound PR review with agent reviews, Devin.ai integration, remediation cycles, and merge.
+description: This skill should be used when the user asks to "quality gate", "run quality gate", "review and merge", "PR review cycle", or mentions completing a phase/milestone and wanting comprehensive review before merge. Implements compound PR review with agent reviews, Devin.ai integration, and remediation cycles, with optional merge after explicit approval. For "yes, ship this" workflows that own the merge gate, watch CI to green, and verify deploys, prefer ship-loop instead.
 version: 1.0.0
 ---
 
