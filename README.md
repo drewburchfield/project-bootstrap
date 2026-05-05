@@ -10,15 +10,20 @@ A [Claude Code](https://docs.anthropic.com/en/docs/claude-code) plugin from the 
 
 ## What it does
 
-Auto-detects your project language, installs and configures linting, formatting, and type checking, then enforces quality gates on every Claude session. Run `/quality-gate` for a comprehensive PR review cycle with agent reviews, Devin.ai integration, and merge workflow. Run `/ship-loop` to carry a branch or PR through checks, review, remediation, merge gates, deploy verification, and closeout. Run `/supervision-loop` to consolidate developer activity across Slack, GitHub, Linear, and repo review into a current feedback and delegation brief. If a repo has a private `.claude/supervision-loop/default.md`, `/supervision-loop` uses it automatically.
+Auto-detects your project language, installs and configures linting, formatting, and type checking, then enforces quality gates on every Claude session.
+
+For PR work: `/quality-gate` runs a thorough local review pass with agent reviews, Devin.ai integration, and remediation cycles, with optional merge after explicit approval. `/ship-loop` is the "yes, ship this" driver that wraps quality-gate's review with CI watching, `--greenlit`-gated merge, deploy verification, and issue closeout.
+
+For team work: `/supervision-loop` consolidates a teammate's Slack, GitHub, and Linear activity into a current feedback and delegation brief. It drafts replies in your voice and never auto-sends. If a repo has a private `.claude/supervision-loop/default.md`, `/supervision-loop` uses it automatically.
 
 ## Commands
 
 | Command | What it does |
 |---------|-------------|
-| `/quality-gate` | PR review cycle with agent reviews, Devin.ai integration, and merge workflow |
-| `/ship-loop` | Shipping state machine for PR watch, remediation, greenlit merge, deploy verification, and closeout |
-| `/supervision-loop` | Developer supervision loop for PR review, post-merge review, feedback drafts, and next assignment recommendations |
+| `/bootstrap` | Auto-detect project language, install quality tooling, set up stop hooks, and pick complementary plugins |
+| `/quality-gate` | Thorough PR review cycle with agent reviews, Devin.ai integration, and remediation, with optional merge after approval |
+| `/ship-loop` | Shipping driver: wraps quality-gate with CI watching, remediation, `--greenlit`-gated merge, deploy verification, and closeout |
+| `/supervision-loop` | Developer supervision loop: open and merged PR review, draft feedback in your voice, suggest next assignments |
 
 ## Features
 
