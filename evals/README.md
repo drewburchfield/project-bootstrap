@@ -51,7 +51,10 @@ bash evals/run_live_eval.sh qg-live-mode-plan ab all
 # Contract quiz A/B
 bash evals/run_live_eval.sh qg-live-contract ab all
 
-# Full matrix (both fixtures x both variants)
+# E2E execute on sandbox repo (known defects GT1–GT4)
+bash evals/run_live_eval.sh qg-live-execute ab all
+
+# Full matrix (all live fixtures x both variants)
 bash evals/run_live_eval.sh matrix
 ```
 
@@ -61,5 +64,17 @@ Uses braintrust `bt_probe.sh` when available (`../braintrust/scripts/bt_probe.sh
 |---------|-------------------|-----|
 | `qg-live-mode-plan` | Plan scenarios A–F (Claude/Codex/Grok/OpenCode bots/agy) | 12 |
 | `qg-live-contract` | 10 short contract questions | 10 |
+| `qg-live-execute` | **Run** Review Suite on `fixtures/sandbox-qg` code; emit findings + tier | 9 |
+
+### Execute ground truth (`sandbox-qg`)
+
+| ID | Defect |
+|----|--------|
+| GT1 | SQL injection via string concat |
+| GT2 | Empty `except` / silent failure |
+| GT3 | Null deref in `format_display_name` |
+| GT4 | `compute_score` has no tests |
+
+Score: 4 finding hits + 2 artifact shape + 2 tier honesty (Blocked, not Pass) + 1 bot hygiene.
 
 Heuristic scores are smoke signals; spot-check `result.txt` when peers diverge.

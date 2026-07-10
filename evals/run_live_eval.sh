@@ -8,6 +8,7 @@
 #   bash evals/run_live_eval.sh
 #   bash evals/run_live_eval.sh qg-live-mode-plan skill-v15 agy,codex,grok,opencode,claude
 #   bash evals/run_live_eval.sh qg-live-contract ab agy,codex,grok,opencode,claude
+#   bash evals/run_live_eval.sh qg-live-execute ab all   # E2E on sandbox repo
 #   bash evals/run_live_eval.sh matrix
 #
 # Writes: evals/runs/<timestamp>-live-<fixture>/
@@ -32,7 +33,7 @@ if [[ "$FIXTURE" == "matrix" ]]; then
   MATRIX_ROOT="evals/runs/${TS}-live-matrix"
   mkdir -p "$MATRIX_ROOT"
   echo -e "fixture\tvariant\tpeer\tscore\tmax\thits\tbytes" >"$MATRIX_ROOT/combined.tsv"
-  for fix in qg-live-mode-plan qg-live-contract; do
+  for fix in qg-live-mode-plan qg-live-contract qg-live-execute; do
     for var in skill-v15 skill-v14; do
       echo "======== LIVE matrix fixture=$fix variant=$var ========"
       bash "$ROOT/evals/run_live_eval.sh" "$fix" "$var" "$PEERS_CSV" | tee "$MATRIX_ROOT/${fix}-${var}.log" || true
@@ -63,6 +64,29 @@ fi
 # shellcheck disable=SC1091
 source /tmp/bt_models.env 2>/dev/null || true
 
+append_sandbox() {
+  # Real code under review for execute fixture
+  echo
+  echo "## SANDBOX REPOSITORY (review this code as local changes)"
+  echo
+  echo "### src/user_service.py"
+  echo '```python'
+  cat evals/fixtures/sandbox-qg/src/user_service.py
+  echo '```'
+  echo
+  echo "### tests/test_user_service.py"
+  echo '```python'
+  cat evals/fixtures/sandbox-qg/tests/test_user_service.py
+  echo '```'
+  echo
+  echo "### pass checklists (run these lenses)"
+  for p in code-correctness silent-failures tests types comments simplify; do
+    echo "#### $p"
+    cat "skills/quality-gate/references/review-suite/passes/${p}.md"
+    echo
+  done
+}
+
 build_package() {
   local variant="$1"
   local out="$2"
@@ -71,27 +95,39 @@ build_package() {
     echo "## VARIANT: $variant"
     echo "## FIXTURE: $FIXTURE"
     echo
-    echo "You are evaluating quality-gate behavior from the skill text below."
-    echo "Do not invent tools not described. Prefer host-correct adapters."
+    if [[ "$FIXTURE" == "qg-live-execute" ]]; then
+      echo "EXECUTE quality-gate --local on the sandbox code. Emit findings + tier_declaration + pass artifacts."
+    else
+      echo "You are evaluating quality-gate behavior from the skill text below."
+      echo "Do not invent tools not described. Prefer host-correct adapters."
+    fi
     echo
     if [[ "$variant" == "skill-v15" ]]; then
       echo "## SKILL TEXT (project-bootstrap quality-gate v1.5.0 — current)"
       cat skills/quality-gate/SKILL.md
       echo
-      echo "## REVIEW SUITE SPEC (excerpt — full rules)"
+      echo "## REVIEW SUITE SPEC"
       cat skills/quality-gate/references/review-suite/SPEC.md
       echo
-      echo "## HOST ADAPTERS (summaries)"
+      echo "## HOST ADAPTERS"
       for h in claude-code codex grok opencode agy; do
         echo "### $h"
         cat "skills/quality-gate/references/review-suite/host-adapters/${h}.md"
         echo
       done
+      if [[ "$FIXTURE" == "qg-live-execute" ]]; then
+        append_sandbox
+      fi
     elif [[ "$variant" == "skill-v14" ]]; then
       echo "## SKILL TEXT (project-bootstrap quality-gate v1.4.0 — previously live baseline)"
       cat evals/baselines/quality-gate-v1.4.0-SKILL.md
       echo
       echo "## NOTE: This baseline has no portable Review Suite package."
+      if [[ "$FIXTURE" == "qg-live-execute" ]]; then
+        append_sandbox
+        echo
+        echo "## NOTE: Still execute a thorough multi-lens review of the sandbox using agent names from the v1.4 skill if present."
+      fi
     else
       echo "unknown variant $variant" >&2
       exit 2
@@ -116,7 +152,7 @@ run_peer() {
       if [[ "${bt_agy_available:-true}" == "false" ]]; then
         echo "SKIPPED unavailable" >"$outdir/result.txt"; return
       fi
-      timeout 180 agy --print "$q" --dangerously-skip-permissions \
+      timeout 240 agy --print "$q" --dangerously-skip-permissions \
         >"$outdir/result.txt" 2>"$outdir/stderr.txt" || true
       ;;
     codex)
@@ -124,7 +160,7 @@ run_peer() {
         echo "SKIPPED unavailable" >"$outdir/result.txt"; return
       fi
       local home="${bt_codex_home:-/tmp/bt-codex-home}"
-      CODEX_HOME="$home" timeout 200 codex exec --ephemeral --ignore-user-config \
+      CODEX_HOME="$home" timeout 260 codex exec --ephemeral --ignore-user-config \
         -s read-only --json --skip-git-repo-check -C "${TMPDIR:-/tmp}" "$q" \
         </dev/null 2>"$outdir/stderr.txt" >"$outdir/raw.jsonl" || true
       jq -rs 'map(select(.item.type? == "agent_message")) | last | .item.text // empty' \
@@ -134,7 +170,7 @@ run_peer() {
       if [[ "${bt_grok_available:-true}" == "false" ]]; then
         echo "SKIPPED unavailable" >"$outdir/result.txt"; return
       fi
-      timeout 180 grok -p "$q" -m "${bt_grok_model:-grok-4.5}" \
+      timeout 240 grok -p "$q" -m "${bt_grok_model:-grok-4.5}" \
         --output-format json --disable-web-search \
         2>"$outdir/stderr.txt" \
         | jq -r 'if .type=="error" then "GROK_FAILED: "+.message else .text end' \
@@ -146,7 +182,7 @@ run_peer() {
       fi
       local args=(run --format json --auto --pure)
       [[ -n "${bt_opencode_model:-}" ]] && args+=(-m "$bt_opencode_model")
-      timeout 180 opencode "${args[@]}" "$q" 2>"$outdir/stderr.txt" \
+      timeout 240 opencode "${args[@]}" "$q" 2>"$outdir/stderr.txt" \
         | jq -rs 'map(select(.type=="text") | .part.text // .text // empty) | map(select(length>0)) | last // empty' \
         >"$outdir/result.txt" || true
       ;;
@@ -154,7 +190,7 @@ run_peer() {
       if [[ "${bt_claude_cli_available:-true}" == "false" ]]; then
         echo "SKIPPED unavailable" >"$outdir/result.txt"; return
       fi
-      timeout 180 claude -p "$q" --model "${bt_claude_model:-sonnet}" --output-format json \
+      timeout 240 claude -p "$q" --model "${bt_claude_model:-sonnet}" --output-format json \
         2>"$outdir/stderr.txt" \
         | jq -r '.result // empty' >"$outdir/result.txt" || true
       ;;
@@ -210,11 +246,19 @@ for variant in $(resolve_variants "$VARIANT"); do
     if [[ ! -f "$res" ]]; then
       echo "missing" >"$res"
     fi
-    scored=$(python3 evals/scripts/score_live.py "$FIXTURE" "$res" --json)
-    score=$(echo "$scored" | python3 -c "import sys,json; d=json.load(sys.stdin); print(d['score'])")
-    maxs=$(echo "$scored" | python3 -c "import sys,json; d=json.load(sys.stdin); print(d['max'])")
-    hits=$(echo "$scored" | python3 -c "import sys,json; d=json.load(sys.stdin); print(','.join(d['hits']))")
-    bytes=$(echo "$scored" | python3 -c "import sys,json; d=json.load(sys.stdin); print(d['bytes'])")
+    if [[ "$FIXTURE" == "qg-live-execute" ]]; then
+      scored=$(python3 evals/scripts/score_execute.py "$res" --json)
+      score=$(echo "$scored" | python3 -c "import sys,json; d=json.load(sys.stdin); print(d['score'])")
+      maxs=$(echo "$scored" | python3 -c "import sys,json; d=json.load(sys.stdin); print(d['max'])")
+      hits=$(echo "$scored" | python3 -c "import sys,json; d=json.load(sys.stdin); print(','.join(d.get('gt_hits') or []))")
+      bytes=$(echo "$scored" | python3 -c "import sys,json; d=json.load(sys.stdin); print(d.get('bytes',0))")
+    else
+      scored=$(python3 evals/scripts/score_live.py "$FIXTURE" "$res" --json)
+      score=$(echo "$scored" | python3 -c "import sys,json; d=json.load(sys.stdin); print(d['score'])")
+      maxs=$(echo "$scored" | python3 -c "import sys,json; d=json.load(sys.stdin); print(d['max'])")
+      hits=$(echo "$scored" | python3 -c "import sys,json; d=json.load(sys.stdin); print(','.join(d['hits']))")
+      bytes=$(echo "$scored" | python3 -c "import sys,json; d=json.load(sys.stdin); print(d['bytes'])")
+    fi
     echo -e "${variant}\t${peer}\t${score}\t${maxs}\t${hits}\t${bytes}" | tee -a "$RUN_ROOT/summary.tsv"
     echo "$scored" >"$outdir/score.json"
   done
@@ -225,10 +269,11 @@ echo "=== LIVE SUMMARY ($RUN_ROOT) ==="
 column -t -s $'\t' "$RUN_ROOT/summary.tsv" 2>/dev/null || cat "$RUN_ROOT/summary.tsv"
 
 # Compare means v15 vs v14 if both present
-python3 - <<'PY' "$RUN_ROOT/summary.tsv"
+python3 - <<'PY' "$RUN_ROOT/summary.tsv" "$FIXTURE"
 import sys
 from collections import defaultdict
 path = sys.argv[1]
+fixture = sys.argv[2]
 rows = []
 with open(path) as f:
     next(f)
@@ -239,7 +284,7 @@ with open(path) as f:
 by = defaultdict(list)
 for v, peer, score, mx, *rest in rows:
     try:
-        by[v].append((peer, int(score), int(mx)))
+        by[v].append((peer, int(score), int(mx), rest[0] if rest else ""))
     except ValueError:
         pass
 print("\n=== MEAN SCORES BY VARIANT ===")
@@ -250,9 +295,10 @@ for v, items in sorted(by.items()):
     m = sum(x[2] for x in items)
     n = len(items)
     print(f"{v}: mean {s/n:.2f}/{items[0][2]} across {n} peers  ({s}/{m} sum)")
-    for peer, sc, mx in items:
+    for peer, sc, mx, hits in items:
         bar = "#" * sc + "-" * (mx - sc)
-        print(f"  {peer:10} {sc:2}/{mx} {bar}")
+        extra = f"  hits={hits}" if hits and fixture == "qg-live-execute" else ""
+        print(f"  {peer:10} {sc:2}/{mx} {bar}{extra}")
 if "skill-v15" in by and "skill-v14" in by:
     m15 = sum(x[1] for x in by["skill-v15"]) / len(by["skill-v15"])
     m14 = sum(x[1] for x in by["skill-v14"]) / len(by["skill-v14"])
@@ -263,6 +309,9 @@ if "skill-v15" in by and "skill-v14" in by:
         print("VERDICT: tie on heuristic scores")
     else:
         print("VERDICT: v1.4 scored higher (inspect results; possible scorer mismatch)")
+if fixture == "qg-live-execute":
+    print("\nGround truth: GT1 SQL inject, GT2 empty catch, GT3 null deref, GT4 missing tests for compute_score")
+    print("Max 9 = 4 findings + 2 artifacts + 2 tier honesty + 1 bot hygiene")
 PY
 
 echo "Done: $RUN_ROOT"
