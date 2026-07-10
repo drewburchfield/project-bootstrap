@@ -12,7 +12,7 @@ A [Claude Code](https://docs.anthropic.com/en/docs/claude-code) plugin from the 
 
 Auto-detects your project language, installs and configures linting, formatting, and type checking, then enforces quality gates on every Claude session.
 
-For PR work: `/quality-gate` runs a thorough local review pass with agent reviews, Devin.ai integration, and remediation cycles, with optional merge after explicit approval. `/ship-loop` is the "yes, ship this" driver that wraps quality-gate's review with CI watching, `--greenlit`-gated merge, deploy verification, and issue closeout.
+For PR work: `/quality-gate` runs a multi-harness **Review Suite** (shared lenses + host adapters for Claude Code, Codex, Grok, OpenCode, agy). External bots (Devin, CodeRabbit) are optional. `/ship-loop` is the "yes, ship this" driver with CI watch, greenlit merge, and deploy verification.
 
 For repo hygiene: `/docs-drift` scans recent merged PRs and commits for stale setup docs, runbooks, CLAUDE.md, AGENTS.md, and project guidance.
 
@@ -56,28 +56,24 @@ For team work: `/supervision-loop` consolidates a teammate's Slack, GitHub, and 
 claude plugins install project-bootstrap@not-my-job
 ```
 
-## Review Suite (Phase 1a)
+## Review Suite (v1.5)
 
-Portable multi-harness review methodology lives under:
+Portable multi-harness methodology under `skills/quality-gate/references/review-suite/`:
 
-`skills/quality-gate/references/review-suite/`
-
-- `SPEC.md` — tiers T0–T3, pass artifact contract, capability probe, no Claude-only chrome
-- `passes/` — six lenses (code-correctness, silent-failures, tests, types, comments, simplify)
-- `host-adapters/` — Claude Code, Codex, Grok, OpenCode, agy
-- `synthesis.md` — merge findings and set gate status
-
-Skills are not fully rewired yet (Phase 1b). The suite is the source of truth for upcoming multi-harness quality-gate / ship-loop / supervision-loop work.
+- `SPEC.md` — tiers T0–T3, pass artifacts, capability probe
+- `passes/` — six lenses
+- `host-adapters/` — Claude Code (T3 toolkit), Codex/Grok/OpenCode/agy (T2 sequential defaults)
+- Wired into **quality-gate**, **ship-loop**, and **supervision-loop**
 
 ## Evals
 
 ```bash
 bash evals/run_eval.sh
-# or
-python3 evals/scripts/score_suite.py
+python3 evals/scripts/score_suite.py ab    # v1.4.0 frozen skills vs live
+python3 evals/scripts/score_suite.py wired
 ```
 
-Deterministic: structure, SPEC contracts, sample artifact validation, host-matrix rules, baseline coupling snapshot. See `evals/README.md`.
+Includes structure, contracts, artifacts, host-matrix, v1.4 baseline control group, live wiring checks, and old-vs-new A/B. See `evals/README.md`.
 
 ## License
 

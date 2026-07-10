@@ -220,33 +220,197 @@ def score_artifacts(r: Result) -> None:
             r.fail(f"sample:{name}", str(e))
 
 
-def score_baseline_skills(r: Result) -> None:
-    """Document coupling in *current* shipping skills (expected failures are reported as baseline signals)."""
+BASELINES = ROOT / "evals/baselines"
+
+
+def _has(pat: str, text: str) -> bool:
+    return re.search(pat, text, re.I) is not None
+
+
+def score_wired_skills(r: Result) -> None:
+    """Live skills after Phase 1b must be multi-harness + suite-wired."""
     qg = (SKILLS / "quality-gate/SKILL.md").read_text()
     ship = (SKILLS / "ship-loop/SKILL.md").read_text()
     sup = (SKILLS / "supervision-loop/SKILL.md").read_text()
 
-    # Baseline: current quality-gate still Claude-shaped (informational + expected_fail flags)
+    # Must wire suite
+    for name, text in [("qg", qg), ("ship", ship), ("sup", sup)]:
+        if "review-suite" in text or "Review Suite" in text:
+            r.ok(f"wired:{name}:mentions_review_suite")
+        else:
+            r.fail(f"wired:{name}:mentions_review_suite", "must reference Review Suite")
+
+    if "SPEC.md" in qg or "review-suite/SPEC" in qg:
+        r.ok("wired:qg:points_at_spec")
+    else:
+        r.fail("wired:qg:points_at_spec", "must load SPEC.md")
+
+    # Must forbid unconditional sleep
+    if re.search(r"sleep\s+60", qg) and "Forbidden" not in qg and "unconditional" not in qg.lower():
+        # bare sleep 60 as instruction is bad
+        if re.search(r"(?m)^(?:```[\s\S]*?)?sleep 60", qg) and "Forbidden" not in qg[: qg.find("sleep 60") + 200]:
+            r.fail("wired:qg:no_bare_sleep_60", "found sleep 60 without forbid framing")
+        else:
+            r.ok("wired:qg:sleep_60_only_as_forbid_or_absent")
+    elif re.search(r"sleep\s+60", qg):
+        # allowed only in forbid/context about bots
+        if "unconditional" in qg.lower() or "Forbidden" in qg:
+            r.ok("wired:qg:sleep_60_only_as_forbid_or_absent", "discussed as forbidden")
+        else:
+            r.fail("wired:qg:no_bare_sleep_60", "sleep 60 present without forbid")
+    else:
+        r.ok("wired:qg:no_bare_sleep_60", "no sleep 60")
+
+    # Must have multi-host language
+    for host in ("codex", "grok", "opencode", "agy", "claude"):
+        if host in qg.lower():
+            r.ok(f"wired:qg:host_{host}")
+        else:
+            r.fail(f"wired:qg:host_{host}", "host not mentioned")
+
+    # Tier honesty
+    for needle in ("T2", "T3", "Incomplete", "tier_declaration", "pass artifact"):
+        if needle.lower() in qg.lower() or needle in qg:
+            r.ok(f"wired:qg:has_{needle.replace(' ', '_')}")
+        else:
+            r.fail(f"wired:qg:has_{needle.replace(' ', '_')}", "missing")
+
+    # Non-Claude must not be required path only
+    if "do not" in qg.lower() and ("/review-pr" in qg or "pr-review-toolkit" in qg):
+        r.ok("wired:qg:limits_claude_tools_on_other_hosts")
+    else:
+        r.fail("wired:qg:limits_claude_tools_on_other_hosts", "must constrain toolkit to Claude path")
+
+    # Ship loop owns merge / no unconditional bots
+    if "unconditional" in ship.lower() or "n/a" in ship.lower() or "not configured" in ship.lower():
+        r.ok("wired:ship:optional_bots")
+    else:
+        r.fail("wired:ship:optional_bots", "must treat bots optional")
+
+    if "Review Suite" in ship or "review-suite" in ship:
+        r.ok("wired:ship:suite")
+    else:
+        r.fail("wired:ship:suite", "must use suite")
+
+    # Supervision generic operator + suite
+    if "operator" in sup.lower():
+        r.ok("wired:sup:operator_generic")
+    else:
+        r.fail("wired:sup:operator_generic", "must use operator not only personal name")
+
+    if "Review Suite" in sup or "review-suite" in sup:
+        r.ok("wired:sup:suite")
+    else:
+        r.fail("wired:sup:suite", "must use suite")
+
+    if re.search(r"do not claim.*Review Suite|do not claim.*quality-gate", sup, re.I):
+        r.ok("wired:sup:honesty")
+    else:
+        r.fail("wired:sup:honesty", "must forbid false suite claims")
+
+
+def score_old_vs_new(r: Result) -> None:
+    """A/B: frozen v1.4.0 baselines vs live skills (regression + improvement)."""
+    pairs = [
+        ("quality-gate", "quality-gate-v1.4.0-SKILL.md", "quality-gate/SKILL.md"),
+        ("ship-loop", "ship-loop-v1.4.0-SKILL.md", "ship-loop/SKILL.md"),
+        ("supervision-loop", "supervision-loop-v1.4.0-SKILL.md", "supervision-loop/SKILL.md"),
+    ]
+
+    def debt_score(text: str) -> dict:
+        # Instructional wait (debt), not prose forbidding unconditional wait
+        has_wait_instruction = bool(
+            re.search(r"Waiting 60 seconds for Devin|Wait 60s for external tools \(Devin", text, re.I)
+        ) or bool(re.search(r"(?m)^\s*sleep 60\s*$", text))
+        discusses_forbid_wait = "unconditional" in text.lower() and (
+            "forbidden" in text.lower() or "do not" in text.lower()
+        )
+        return {
+            "bare_sleep_60": bool(re.search(r"(?m)^\s*sleep 60\s*$", text))
+            or (
+                "sleep 60" in text
+                and not discusses_forbid_wait
+                and bool(re.search(r"echo.*[Ww]aiting 60", text))
+            ),
+            "unconditional_devin_wait": has_wait_instruction and not discusses_forbid_wait,
+            "suite_wired": "review-suite" in text or "Review Suite" in text,
+            "multi_host": sum(1 for h in ("codex", "grok", "opencode", "agy") if h in text.lower()) >= 2,
+            "tier_system": "T2" in text and "T3" in text,
+        }
+
+    for label, old_name, new_rel in pairs:
+        old_path = BASELINES / old_name
+        new_path = SKILLS / new_rel
+        if not old_path.is_file():
+            r.fail(f"ab:{label}:old_baseline", f"missing {old_path}")
+            continue
+        if not new_path.is_file():
+            r.fail(f"ab:{label}:new_skill", f"missing {new_path}")
+            continue
+        old = debt_score(old_path.read_text())
+        new = debt_score(new_path.read_text())
+
+        # Old should show debt (quality-gate especially)
+        if label == "quality-gate":
+            if old["unconditional_devin_wait"] or old["bare_sleep_60"] or not old["suite_wired"]:
+                r.ok(f"ab:{label}:old_has_debt", f"old={old}")
+            else:
+                r.fail(f"ab:{label}:old_has_debt", f"expected v1.4 debt, got {old}")
+
+            if new["suite_wired"] and new["multi_host"] and new["tier_system"] and not new["unconditional_devin_wait"]:
+                r.ok(f"ab:{label}:new_improved", f"new={new}")
+            else:
+                r.fail(f"ab:{label}:new_improved", f"expected multi-harness suite, got {new}")
+
+            if old["suite_wired"] and not new["suite_wired"]:
+                r.fail(f"ab:{label}:no_regress_suite", "suite lost")
+            else:
+                r.ok(f"ab:{label}:no_regress_suite")
+        else:
+            # ship / supervision: new must be suite-wired; old typically not
+            if new["suite_wired"]:
+                r.ok(f"ab:{label}:new_suite_wired")
+            else:
+                r.fail(f"ab:{label}:new_suite_wired", "new must wire suite")
+            if not old["suite_wired"] and new["suite_wired"]:
+                r.ok(f"ab:{label}:improved_over_v14")
+            elif old["suite_wired"] and new["suite_wired"]:
+                r.ok(f"ab:{label}:still_wired")
+            else:
+                r.fail(f"ab:{label}:improved_over_v14", f"old={old} new={new}")
+
+        # Size sanity: new quality-gate should be leaner than 1010-line v1.4
+        if label == "quality-gate":
+            old_lines = len(old_path.read_text().splitlines())
+            new_lines = len(new_path.read_text().splitlines())
+            if new_lines < old_lines * 0.5:
+                r.ok(f"ab:{label}:leaner", f"{old_lines} → {new_lines} lines")
+            else:
+                r.fail(f"ab:{label}:leaner", f"expected hybrid slim, {old_lines} → {new_lines}")
+
+
+def score_baseline_skills(r: Result) -> None:
+    """v1.4.0 frozen baselines still exhibit Claude-shaped debt (control group)."""
+    qg = (BASELINES / "quality-gate-v1.4.0-SKILL.md").read_text()
+    ship = (BASELINES / "ship-loop-v1.4.0-SKILL.md").read_text()
+    sup = (BASELINES / "supervision-loop-v1.4.0-SKILL.md").read_text()
+
     patterns = [
-        ("qg_has_review_pr", r"/review-pr", qg, True),
-        ("qg_has_pr_review_toolkit", r"pr-review-toolkit", qg, True),
-        ("qg_has_sleep_60", r"sleep 60", qg, True),
-        ("qg_has_devin_wait", r"Devin", qg, True),
-        ("ship_mentions_devin", r"Devin", ship, True),
-        ("sup_mentions_pr_review_toolkit", r"pr-review-toolkit", sup, True),
+        ("v14_qg_has_review_pr", r"/review-pr", qg, True),
+        ("v14_qg_has_pr_review_toolkit", r"pr-review-toolkit", qg, True),
+        ("v14_qg_has_sleep_60", r"sleep 60", qg, True),
+        ("v14_qg_has_devin_wait", r"Devin", qg, True),
+        ("v14_qg_no_suite", r"review-suite", qg, False),
+        ("v14_ship_mentions_devin", r"Devin", ship, True),
+        # v1.4 supervision mentioned Devin/quality-gate but not always pr-review-toolkit by name
+        ("v14_sup_no_suite", r"review-suite|Review Suite", sup, False),
     ]
     for name, pat, text, expect_present in patterns:
         found = re.search(pat, text) is not None
         if found == expect_present:
-            r.ok(f"baseline:{name}", "present as expected (migration debt)" if found else "absent")
+            r.ok(f"baseline:{name}", "control group as expected")
         else:
             r.fail(f"baseline:{name}", f"expected present={expect_present} found={found}")
-
-    # Suite must NOT be referenced as already wired (Phase 1a is extraction only)
-    if "review-suite/SPEC" in qg or "references/review-suite" in qg:
-        r.ok("baseline:qg_not_yet_wired_or_already", "skill already points at suite")
-    else:
-        r.ok("baseline:qg_not_wired_yet", "expected until Phase 1b")
 
 
 def score_host_matrix(r: Result) -> None:
@@ -307,7 +471,17 @@ def main() -> int:
         "suite",
         nargs="?",
         default="all",
-        choices=["all", "structure", "contracts", "artifacts", "baseline", "host-matrix", "align"],
+        choices=[
+            "all",
+            "structure",
+            "contracts",
+            "artifacts",
+            "baseline",
+            "wired",
+            "ab",
+            "host-matrix",
+            "align",
+        ],
     )
     parser.add_argument("--json", action="store_true")
     args = parser.parse_args()
@@ -318,6 +492,8 @@ def main() -> int:
         "contracts": score_spec_contracts,
         "artifacts": score_artifacts,
         "baseline": score_baseline_skills,
+        "wired": score_wired_skills,
+        "ab": score_old_vs_new,
         "host-matrix": score_host_matrix,
         "align": score_pass_id_alignment,
     }

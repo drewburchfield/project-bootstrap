@@ -1,6 +1,6 @@
 # project-bootstrap evals
 
-Deterministic Review Suite checks (Phase 0 / 1a). No LLM peers required for green.
+Deterministic Review Suite checks (Phase 0–1b). No LLM peers required for green.
 
 ## Why
 
@@ -10,16 +10,17 @@ Material skill changes need fixture-backed signals. This harness validates:
 2. **Contracts** — artifact + tier + capability probe language in SPEC
 3. **Artifacts** — sample runs: valid T2 Pass, invalid T1 Pass, rubber-stamp none_found
 4. **Host matrix** — non-Claude adapters forbid toolkit-only paths; Claude allows T3
-5. **Baseline** — documents current quality-gate/ship-loop/supervision Claude coupling (migration debt)
+5. **Baseline (v1.4.0 control)** — frozen skills under `evals/baselines/` still Claude-shaped
+6. **Wired** — live skills reference Review Suite, multi-host, no bare Devin sleep
+7. **A/B (`ab`)** — v1.4.0 vs live improvement (suite wired, leaner quality-gate, debt cleared)
 
 ## Quick start
 
 ```bash
 cd /path/to/project-bootstrap
 bash evals/run_eval.sh
-# or
-python3 evals/scripts/score_suite.py
-python3 evals/scripts/score_suite.py artifacts
+python3 evals/scripts/score_suite.py ab
+python3 evals/scripts/score_suite.py wired
 ```
 
 `evals/runs/` is gitignored.
@@ -28,32 +29,13 @@ python3 evals/scripts/score_suite.py artifacts
 
 ```text
 evals/
-  README.md
-  run_eval.sh
+  baselines/               # frozen v1.4.0 SKILL.md snapshots
+  samples/                 # YAML suite runs
   scripts/score_suite.py
-  samples/                 # YAML suite runs for artifact validation
-  fixtures/                # future LLM contract quizzes (optional)
-  runs/                    # gitignored
+  run_eval.sh
 skills/quality-gate/references/review-suite/
-  SPEC.md
-  synthesis.md
-  passes/*.md
-  host-adapters/*.md
 ```
 
 ## Pass criteria
 
-`score_suite.py all` must exit 0.
-
-Baseline checks **expect** current skills to still mention `/review-pr`, Devin, pr-review-toolkit. That is intentional until Phase 1b rewrites wire the suite.
-
-## Adding tests
-
-1. Add a sample under `evals/samples/` for artifact edge cases.
-2. Extend `validate_run()` in `score_suite.py` if the contract grows.
-3. Re-run `bash evals/run_eval.sh`.
-
-## Later (not Phase 0)
-
-- Multi-peer LLM contract quizzes (braintrust-style)
-- Execution evals that parse live gate transcripts
+`score_suite.py all` must exit 0 (77 checks as of 1.5.0).
