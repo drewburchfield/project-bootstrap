@@ -39,3 +39,27 @@ skills/quality-gate/references/review-suite/
 ## Pass criteria
 
 `score_suite.py all` must exit 0 (77 checks as of 1.5.0).
+
+## Live multi-harness dogfood (braintrust-style)
+
+Text scoring cannot prove host behavior. Live evals **inject the skill package into peer CLIs** (agy, Codex, Grok, OpenCode, Claude) the same way braintrust consults work, then auto-score plans/answers.
+
+```bash
+# Mode-plan A/B: v1.5 package vs frozen v1.4 skill (all peers)
+bash evals/run_live_eval.sh qg-live-mode-plan ab all
+
+# Contract quiz A/B
+bash evals/run_live_eval.sh qg-live-contract ab all
+
+# Full matrix (both fixtures x both variants)
+bash evals/run_live_eval.sh matrix
+```
+
+Uses braintrust `bt_probe.sh` when available (`../braintrust/scripts/bt_probe.sh`). Writes `evals/runs/<ts>-live-<fixture>/` with packages, per-peer `result.txt`, `score.json`, `summary.tsv`.
+
+| Fixture | What peers must do | Max |
+|---------|-------------------|-----|
+| `qg-live-mode-plan` | Plan scenarios A–F (Claude/Codex/Grok/OpenCode bots/agy) | 12 |
+| `qg-live-contract` | 10 short contract questions | 10 |
+
+Heuristic scores are smoke signals; spot-check `result.txt` when peers diverge.
