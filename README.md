@@ -56,6 +56,10 @@ For team work: `/supervision-loop` consolidates a teammate's Slack, GitHub, and 
 claude plugins install project-bootstrap@not-my-job
 ```
 
+## Version
+
+**1.5.0** (tag `v1.5.0`) — multi-harness Review Suite for quality-gate / ship-loop / supervision-loop. See [CHANGELOG](CHANGELOG.md).
+
 ## Review Suite (v1.5)
 
 Portable multi-harness methodology under `skills/quality-gate/references/review-suite/`:

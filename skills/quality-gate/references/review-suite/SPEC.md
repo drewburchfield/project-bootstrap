@@ -164,5 +164,5 @@ Thin host skills load this SPEC and the adapter. They must not embed other hosts
 
 ## Version
 
-- Spec version: `1.0.0-draft` (Phase 1a extraction)
-- Align skill rewrites to this before claiming multi-harness Pass
+- Spec version: `1.0.0` (ships with project-bootstrap 1.5.0)
+- Wired into quality-gate, ship-loop, and supervision-loop
