@@ -1,6 +1,6 @@
 <div align="center">
 
-<img src="https://ghrb.waren.build/banner?header=project-bootstrap%20%F0%9F%8F%97%EF%B8%8F&subheader=Quality%20tooling%20and%20PR%20gates%20in%20one%20command&bg=0a1628&secondaryBg=1e3a5f&color=e8f0fe&subheaderColor=7eb8da&headerFont=Inter&subheaderFont=Inter&support=false" alt="project-bootstrap" width="100%">
+<img src="https://ghrb.waren.build/banner?header=project-bootstrap%20%F0%9F%8F%97%EF%B8%8F&subheader=Quality%20tooling%20and%20multi-harness%20Review%20Suite%20gates&bg=0a1628&secondaryBg=1e3a5f&color=e8f0fe&subheaderColor=7eb8da&headerFont=Inter&subheaderFont=Inter&support=false" alt="project-bootstrap" width="100%">
 
 A [Claude Code](https://docs.anthropic.com/en/docs/claude-code) plugin from the [not-my-job](https://github.com/drewburchfield/not-my-job) marketplace.
 
@@ -23,15 +23,16 @@ For team work: `/supervision-loop` consolidates a teammate's Slack, GitHub, and 
 | Command | What it does |
 |---------|-------------|
 | `/bootstrap` | Auto-detect project language, install quality tooling, set up stop hooks, and pick complementary plugins |
-| `/quality-gate` | Thorough PR review cycle with agent reviews, Devin.ai integration, and remediation, with optional merge after approval |
+| `/quality-gate` | Multi-harness Review Suite (Claude/Codex/Grok/OpenCode/agy adapters); optional Devin/CodeRabbit bots; remediation; optional merge after approval |
 | `/ship-loop` | Shipping driver: wraps quality-gate with CI watching, remediation, `--greenlit`-gated merge, deploy verification, and closeout |
 | `/docs-drift` | Weekly-friendly docs drift scan across recent PRs, commits, setup docs, runbooks, and project guidance |
-| `/supervision-loop` | Developer supervision loop: open and merged PR review, draft feedback in your voice, suggest next assignments |
+| `/supervision-loop` | Developer supervision loop: open and merged PR review via Review Suite, draft feedback, suggest next assignments |
 
 ## Features
 
 - Auto-detects language (TypeScript, Python, Go)
 - Installs and configures linting, formatting, and type checking
+- Multi-harness Review Suite with host adapters and optional external bots
 - Issue tracker integration (Linear, Jira, GitHub Issues, or standalone)
 - Stop hook enforces quality gates on every Claude session
 - Shipping loop for PR babysitting and greenlit merge workflows
