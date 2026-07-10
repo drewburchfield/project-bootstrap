@@ -56,6 +56,29 @@ For team work: `/supervision-loop` consolidates a teammate's Slack, GitHub, and 
 claude plugins install project-bootstrap@not-my-job
 ```
 
+## Review Suite (Phase 1a)
+
+Portable multi-harness review methodology lives under:
+
+`skills/quality-gate/references/review-suite/`
+
+- `SPEC.md` — tiers T0–T3, pass artifact contract, capability probe, no Claude-only chrome
+- `passes/` — six lenses (code-correctness, silent-failures, tests, types, comments, simplify)
+- `host-adapters/` — Claude Code, Codex, Grok, OpenCode, agy
+- `synthesis.md` — merge findings and set gate status
+
+Skills are not fully rewired yet (Phase 1b). The suite is the source of truth for upcoming multi-harness quality-gate / ship-loop / supervision-loop work.
+
+## Evals
+
+```bash
+bash evals/run_eval.sh
+# or
+python3 evals/scripts/score_suite.py
+```
+
+Deterministic: structure, SPEC contracts, sample artifact validation, host-matrix rules, baseline coupling snapshot. See `evals/README.md`.
+
 ## License
 
 MIT

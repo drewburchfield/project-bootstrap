@@ -29,3 +29,6 @@ build/
 *.swp
 *.swo
 *~
+
+# Eval run artifacts
+evals/runs/

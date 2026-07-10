@@ -1,0 +1,16 @@
+# Sample: T1 general review claiming Pass (must FAIL validation)
+tier_declaration:
+  host: grok
+  adapter: grok-single-review
+  tier: T1
+  execution_mode: single
+  passes_completed: []
+  passes_skipped: []
+  capabilities:
+    agent_suite: false
+    external_bots: []
+    clawpatch: false
+    issue_tracker: none
+  gate_status: Pass
+
+passes: []

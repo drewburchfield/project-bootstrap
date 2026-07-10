@@ -1,0 +1,71 @@
+# Sample: valid T2 sequential suite (should score Pass-eligible structure)
+tier_declaration:
+  host: codex
+  adapter: codex-sequential
+  tier: T2
+  execution_mode: sequential
+  passes_completed:
+    - code-correctness
+    - silent-failures
+    - tests
+    - types
+    - comments
+    - simplify
+  passes_skipped: []
+  capabilities:
+    agent_suite: false
+    external_bots: []
+    clawpatch: true
+    issue_tracker: none
+  gate_status: Pass
+
+passes:
+  - pass_id: code-correctness
+    checked:
+      - logic / edge cases
+      - security patterns in diff
+    line_ranges_or_files:
+      - "src/app.ts:1-80"
+    findings: []
+    none_found: true
+  - pass_id: silent-failures
+    checked:
+      - empty catch
+      - promise rejection
+      - success after partial failure
+    line_ranges_or_files:
+      - "src/app.ts"
+    findings: []
+    none_found: true
+  - pass_id: tests
+    checked:
+      - changed behavior covered
+      - error path coverage
+    line_ranges_or_files:
+      - "src/app.test.ts"
+    findings: []
+    none_found: true
+  - pass_id: types
+    checked:
+      - stringly types
+      - invalid states
+    line_ranges_or_files:
+      - "src/app.ts"
+    findings: []
+    none_found: true
+  - pass_id: comments
+    checked:
+      - contradicting comments
+      - stale docs
+    line_ranges_or_files:
+      - "src/app.ts"
+    findings: []
+    none_found: true
+  - pass_id: simplify
+    checked:
+      - duplication
+      - unnecessary abstraction
+    line_ranges_or_files:
+      - "src/app.ts"
+    findings: []
+    none_found: true

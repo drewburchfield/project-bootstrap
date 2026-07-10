@@ -1,0 +1,58 @@
+# Valid T2 with a High finding → gate Blocked is OK structurally
+tier_declaration:
+  host: claude-code
+  adapter: claude-pr-review-toolkit
+  tier: T3
+  execution_mode: parallel
+  passes_completed:
+    - code-correctness
+    - silent-failures
+    - tests
+    - types
+    - comments
+    - simplify
+  passes_skipped: []
+  capabilities:
+    agent_suite: true
+    external_bots: [devin]
+    clawpatch: false
+    issue_tracker: linear
+  gate_status: Blocked
+
+passes:
+  - pass_id: code-correctness
+    checked: [logic, security]
+    line_ranges_or_files: ["src/x.ts:1-20"]
+    findings:
+      - severity: High
+        file: src/x.ts
+        line: 12
+        title: possible null deref
+        evidence: uses user without guard
+        fix: add null check
+    none_found: false
+  - pass_id: silent-failures
+    checked: [empty catch, promises]
+    line_ranges_or_files: ["src/x.ts"]
+    findings: []
+    none_found: true
+  - pass_id: tests
+    checked: [coverage, error paths]
+    line_ranges_or_files: ["src/x.test.ts"]
+    findings: []
+    none_found: true
+  - pass_id: types
+    checked: [stringly types]
+    line_ranges_or_files: ["src/x.ts"]
+    findings: []
+    none_found: true
+  - pass_id: comments
+    checked: [stale docs]
+    line_ranges_or_files: ["src/x.ts"]
+    findings: []
+    none_found: true
+  - pass_id: simplify
+    checked: [duplication]
+    line_ranges_or_files: ["src/x.ts"]
+    findings: []
+    none_found: true
