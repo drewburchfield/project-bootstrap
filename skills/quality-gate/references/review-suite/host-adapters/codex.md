@@ -17,4 +17,4 @@ Personal skill `quality-gate-codex` already implements T2 + Clawpatch. Align it 
 ## Forbidden
 
 - Invoking `/review-pr` or pr-review-toolkit agent IDs as required steps
-- Gate Pass without six (or skip-justified) pass artifacts
+- Gate Pass without all mandatory (or skip-justified) pass artifacts

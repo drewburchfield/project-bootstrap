@@ -5,7 +5,7 @@
 ## Preferred execution
 
 1. Probe: toolkit / Agent tool / `/review-pr` available?
-2. If yes: run parallel reviewers (or `/review-pr`) covering all six suite lenses.
+2. If yes: run parallel reviewers (or `/review-pr`) covering all seven suite lenses.
 3. Map toolkit agent names → suite pass ids:
    - code-reviewer → code-correctness
    - silent-failure-hunter → silent-failures
@@ -13,6 +13,7 @@
    - type-design-analyzer → types
    - comment-analyzer → comments
    - code-simplifier → simplify
+   - (no toolkit agent) → spec-conformance: run a general-purpose subagent with `passes/spec-conformance.md` and the spec source; skip with reason if no spec source
 4. Ensure each pass has a valid artifact (convert toolkit output if needed).
 5. Probe external bots from project-meta; wait only if configured.
 6. Synthesize + tier_declaration `adapter: claude-pr-review-toolkit`, `tier: T3`.

@@ -4,7 +4,7 @@ description: >
   Use when the user wants to ship, land, or merge a branch or PR ("ship it", "land this",
   "merge when green"), babysit CI, remediate review findings, or greenlit-merge.
   Wraps quality-gate Review Suite with CI watch, optional external bots, merge gate, deploy verify.
-version: 1.5.0
+version: 1.5.1
 ---
 
 # Ship Loop

@@ -59,14 +59,14 @@ claude plugins install project-bootstrap@not-my-job
 
 ## Version
 
-**1.5.0** (tag `v1.5.0`) — multi-harness Review Suite for quality-gate / ship-loop / supervision-loop. See [CHANGELOG](CHANGELOG.md).
+**1.5.1** (tag `v1.5.1`): spec-conformance lens (mattpocock code-review Spec axis, eval-backed) + Fowler smell baseline in simplify. See [CHANGELOG](CHANGELOG.md).
 
 ## Review Suite (v1.5)
 
 Portable multi-harness methodology under `skills/quality-gate/references/review-suite/`:
 
 - `SPEC.md` — tiers T0–T3, pass artifacts, capability probe
-- `passes/` — six lenses
+- `passes/` — seven lenses
 - `host-adapters/` — Claude Code (T3 toolkit), Codex/Grok/OpenCode/agy (T2 sequential defaults)
 - Wired into **quality-gate**, **ship-loop**, and **supervision-loop**
 

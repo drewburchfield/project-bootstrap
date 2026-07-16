@@ -4,7 +4,7 @@ description: >
   Use when the user wants to check in on, supervise, or catch up on another developer,
   consolidate their Slack/GitHub/Linear activity into one brief, draft feedback, or run a
   recurring teammate management loop. Prefer this over quality-gate when PRs belong to someone else.
-version: 1.5.0
+version: 1.5.1
 ---
 
 # Supervision Loop

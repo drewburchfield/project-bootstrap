@@ -5,7 +5,7 @@ description: >
   "PR review cycle", or wants a structured pre-merge review with remediation.
   Multi-harness Review Suite (shared lenses + host adapters). Optional external bots
   (Devin, CodeRabbit). Prefer ship-loop for greenlit merge/CI babysit.
-version: 1.5.0
+version: 1.5.1
 ---
 
 # Quality Gate
@@ -15,7 +15,7 @@ Structured review and remediation before merge. **Review methodology is host-agn
 Deep docs (load on demand):
 
 - `references/review-suite/SPEC.md` — tiers, pass artifacts, capability probe
-- `references/review-suite/passes/*.md` — six lenses
+- `references/review-suite/passes/*.md` — seven lenses
 - `references/review-suite/host-adapters/{claude-code,codex,grok,opencode,agy}.md`
 - `references/review-suite/synthesis.md`
 - `references/linear-integration.md`, `references/github-cli.md` (issue/PR ops)
@@ -91,7 +91,7 @@ On non-Claude hosts: **do not** require `/review-pr` or `pr-review-toolkit:*` ag
 
 ### Pass artifacts (required for Pass)
 
-For each mandatory pass (`code-correctness`, `silent-failures`, `tests`, `types` if typed, `comments`, `simplify`), emit the artifact shape from SPEC (checked list, findings or `none_found: true` with non-empty checked).
+For each mandatory pass (`code-correctness`, `silent-failures`, `tests`, `types` if typed, `comments`, `simplify`, `spec-conformance` if a spec source exists), emit the artifact shape from SPEC (checked list, findings or `none_found: true` with non-empty checked).
 
 ### Tier declaration (required every run)
 

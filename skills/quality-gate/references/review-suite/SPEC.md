@@ -25,6 +25,7 @@ Produce evidence-backed findings across independent review lenses, synthesize se
 | `types` | `passes/types.md` | untyped / non-code-only diffs |
 | `comments` | `passes/comments.md` | never (for code diffs) |
 | `simplify` | `passes/simplify.md` | after correctness passes; still required for suite Pass |
+| `spec-conformance` | `passes/spec-conformance.md` | no spec source identified (record skip reason in tier declaration) |
 
 Non-code docs-only diffs: run at least `comments` + `code-correctness` (as content accuracy) or mark suite **Incomplete** with reason.
 
@@ -104,8 +105,8 @@ tier_declaration:
   adapter: claude-pr-review-toolkit | codex-sequential | grok-sequential | ...
   tier: T3 | T2 | T1 | T0
   execution_mode: parallel | sequential | single | skim
-  passes_completed: [code-correctness, silent-failures, tests, types, comments, simplify]
-  passes_skipped: [{ id: types, reason: "untyped diff" }]
+  passes_completed: [code-correctness, silent-failures, tests, types, comments, simplify, spec-conformance]
+  passes_skipped: [{ id: types, reason: "untyped diff" }, { id: spec-conformance, reason: "no spec source" }]
   capabilities:
     agent_suite: true | false
     external_bots: [] | [devin, coderabbit]
@@ -164,5 +165,6 @@ Thin host skills load this SPEC and the adapter. They must not embed other hosts
 
 ## Version
 
-- Spec version: `1.0.0` (ships with project-bootstrap 1.5.0)
+- Spec version: `1.1.0` (ships with project-bootstrap 1.5.1; adds `spec-conformance` lens, adapted from mattpocock/skills code-review Spec axis; adds Fowler smell baseline to `simplify`)
+- `1.0.0` shipped with project-bootstrap 1.5.0
 - Wired into quality-gate, ship-loop, and supervision-loop

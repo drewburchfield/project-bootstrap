@@ -1,6 +1,6 @@
 {
   "name": "project-bootstrap",
-  "version": "1.5.0",
+  "version": "1.5.1",
   "description": "Auto-detect project language, set up quality tooling and stop hooks, multi-harness Review Suite quality-gate/ship-loop/supervision-loop, docs drift",
   "author": {
     "name": "Drew Burchfield",

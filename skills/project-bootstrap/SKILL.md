@@ -1,7 +1,7 @@
 ---
 name: project-bootstrap
 description: Auto-detect project language, set up quality tooling (ESLint, Prettier, ruff, pyright), configure stop hooks for quality gates, and manage plugin selection. Use when bootstrapping a new or existing project with standard quality infrastructure.
-version: 1.5.0
+version: 1.5.1
 ---
 
 # Project Bootstrap

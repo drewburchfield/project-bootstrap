@@ -1,7 +1,7 @@
 ---
 name: docs-drift
 description: Use when checking, auditing, scanning, or reviewing for stale, outdated, or drifting documentation ("are my docs stale", "scan for docs drift", "docs out of date", "reconcile docs", "audit CLAUDE.md and runbooks against recent PRs"). Compares recent merged PRs, commits, and changed files against README, CLAUDE.md, AGENTS.md, runbooks, setup docs, skills, and prompts. Drafts surgical patches by default; can open a docs-only PR when explicitly greenlit. Safe for weekly cloud routines from a fresh clone.
-version: 1.5.0
+version: 1.5.1
 ---
 
 # Docs Drift
